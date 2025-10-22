@@ -68,3 +68,7 @@ cd variant4
 g++ -std=c++20 -O3 -pthread prime_search.cpp -o prime_search.exe
 ./prime_search.exe
 ```
+
+## How to Build and Run
+
+Video demo link: https://drive.google.com/file/d/1Zg2T46aAv2zl2YNY3BcMOeD8qDYrIOoh/view?usp=sharing
