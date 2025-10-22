@@ -1,4 +1,4 @@
-# P1 - Threaded Prime Number Search
+# P1 - Threaded Prime Number Search - Lourenz Jhay G. Baniqued S19
 
 ## Project Organization
 
