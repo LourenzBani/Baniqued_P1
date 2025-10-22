@@ -1,29 +1,70 @@
-# STDISC_P1_S19
-P1 - Threaded Prime Number Search
+# P1 - Threaded Prime Number Search
 
-## Build Instructions (Windows)
+## Project Organization
 
-### Step 1: Configuration
-Make sure you have a `config.txt` file with two numbers. Example:
 ```
-4 1000
+STDISCM-Problem-Set-1-main/
+├── variant1/
+│   ├── prime_search.cpp
+│   └── config.txt
+├── variant2/
+│   ├── prime_search.cpp
+│   └── config.txt
+├── variant3/
+│   ├── prime_search.cpp
+│   └── config.txt
+├── variant4/
+│   ├── prime_search.cpp
+│   └── config.txt
+└── README.md
 ```
 
-First number = number of threads, Second number = upper limit for prime search
+## The Four Variants
 
-### Step 2: Compile the Programs
-Run these commands one by one:
+### Variant 1: Immediate Print + Range Division
+Divides the search range equally among threads. Primes are printed immediately when found.
+
+### Variant 2: Immediate Print + Divisibility Testing
+Distributes numbers round-robin across threads. Primes are printed immediately when found.
+
+### Variant 3: Batch Print + Range Division
+Divides the search range equally among threads. All results are collected and printed after threads complete.
+
+### Variant 4: Batch Print + Divisibility Testing
+Distributes numbers round-robin across threads. All results are collected and printed after threads complete.
+
+## Configuration
+
+Each variant has a `config.txt` file:
 ```
-g++ -std=c++11 -pthread -o variant1 variant1.cpp
-g++ -std=c++11 -pthread -o variant2 variant2.cpp
-g++ -std=c++11 -pthread -o variant3 variant3.cpp
-g++ -std=c++11 -pthread -o variant4 variant4.cpp
+Threads = 4
+Max Value = 1000
 ```
 
-### Step 3: Run the Programs
+## How to Build and Run
+
+Navigate to each variant directory and compile:
+
+```bash
+cd variant1
+g++ -std=c++20 -O3 -pthread prime_search.cpp -o prime_search.exe
+./prime_search.exe
 ```
-variant1.exe
-variant2.exe
-variant3.exe
-variant4.exe
+
+```bash
+cd variant2
+g++ -std=c++20 -O3 -pthread prime_search.cpp -o prime_search.exe
+./prime_search.exe
+```
+
+```bash
+cd variant3
+g++ -std=c++20 -O3 -pthread prime_search.cpp -o prime_search.exe
+./prime_search.exe
+```
+
+```bash
+cd variant4
+g++ -std=c++20 -O3 -pthread prime_search.cpp -o prime_search.exe
+./prime_search.exe
 ```
