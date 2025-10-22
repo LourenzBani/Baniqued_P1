@@ -8,6 +8,7 @@
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
+#include <map>
 
 std::string strip_whitespace(const std::string& str) {
     auto start = str.find_first_not_of(" \t\n\r");
@@ -76,27 +77,25 @@ inline bool check_primality(uint64_t num) {
 
 std::string get_timestamp(const std::chrono::system_clock::time_point& point) {
     auto tt = std::chrono::system_clock::to_time_t(point);
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(point.time_since_epoch()) % 1000;
     std::stringstream stream;
-    stream << std::put_time(std::localtime(&tt), "%Y-%m-%d %H:%M:%S");
-    stream << "." << std::setfill('0') << std::setw(3) << millis.count();
+    stream << std::put_time(std::localtime(&tt), "%H:%M:%S");
     return stream.str();
 }
 
-void collect_primes_from_range(uint64_t lower, uint64_t upper, int worker_id) {
+void collect_primes_from_range(uint64_t lower, uint64_t upper, int thread_id) {
     auto begin_time = std::chrono::system_clock::now();
     
     {
         std::lock_guard<std::mutex> guard(output_lock);
-        std::cout << "Worker " << worker_id << " started [" << lower << " to " << upper 
-                  << "] at " << get_timestamp(begin_time) << std::endl;
+        std::cout << "Thread " << thread_id << " started: range [" << lower << "-" << upper 
+                  << "] @ " << get_timestamp(begin_time) << std::endl;
     }
 
     std::vector<PrimeData> local_primes;
 
     for (uint64_t candidate = lower; candidate <= upper; ++candidate) {
         if (check_primality(candidate)) {
-            local_primes.push_back({candidate, std::chrono::system_clock::now(), worker_id});
+            local_primes.push_back({candidate, std::chrono::system_clock::now(), thread_id});
         }
     }
 
@@ -107,16 +106,18 @@ void collect_primes_from_range(uint64_t lower, uint64_t upper, int worker_id) {
 
     auto end_time = std::chrono::system_clock::now();
     std::lock_guard<std::mutex> guard(output_lock);
-    std::cout << "Worker " << worker_id << " completed at " << get_timestamp(end_time) << std::endl;
+    std::cout << "Thread " << thread_id << " completed @ " << get_timestamp(end_time) 
+              << " (Found " << local_primes.size() << " primes)" << std::endl;
 }
 
 void execute_prime_search(const Settings& cfg) {
-    std::cout << "\n=== Prime Search: Batch Print + Range Division ===" << std::endl;
-    std::cout << "Threads: " << cfg.thread_count << " | Search Limit: " << cfg.upper_limit << std::endl;
+    std::cout << "\n========== VARIANT A2-B1 ==========" << std::endl;
+    std::cout << "A2: Wait Then Print Everything | B1: Straight Division of Search Range" << std::endl;
+    std::cout << "Configuration: " << cfg.thread_count << " threads | Max: " << cfg.upper_limit << std::endl;
 
     discovered_primes.clear();
     auto program_start = std::chrono::system_clock::now();
-    std::cout << "Starting execution at: " << get_timestamp(program_start) << std::endl;
+    std::cout << "Start: " << get_timestamp(program_start) << "\n" << std::endl;
 
     std::vector<std::thread> workers;
     uint64_t segment_size = cfg.upper_limit / cfg.thread_count;
@@ -129,22 +130,43 @@ void execute_prime_search(const Settings& cfg) {
 
     for (auto& worker : workers) worker.join();
 
-    std::cout << "\n=== Collected Results ===" << std::endl;
-    std::cout << "Total primes discovered: " << discovered_primes.size() << std::endl;
+    std::cout << "\n--- Results (sorted by value) ---" << std::endl;
+    std::cout << "Total Primes Found: " << discovered_primes.size() << "\n" << std::endl;
     
     std::sort(discovered_primes.begin(), discovered_primes.end(), 
               [](const PrimeData& a, const PrimeData& b) { return a.value < b.value; });
 
     for (const auto& prime : discovered_primes) {
-        std::cout << "Worker " << prime.worker_id << " | Prime: " << prime.value 
-                  << " | Timestamp: " << get_timestamp(prime.discovered_at) << std::endl;
+        std::cout << "[T" << prime.worker_id << "] Prime: " << prime.value 
+                  << " | Found at: " << get_timestamp(prime.discovered_at) << std::endl;
+    }
+
+    // Summary by thread
+    std::cout << "\n=== Summary by Thread ===" << std::endl;
+    std::map<int, std::vector<uint64_t>> thread_primes;
+    for (const auto& p : discovered_primes) {
+        thread_primes[p.worker_id].push_back(p.value);
+    }
+    
+    for (const auto& [thread_id, primes] : thread_primes) {
+        std::cout << "Thread " << thread_id << " found " << primes.size() << " primes: ";
+        int show_count = std::min(5, static_cast<int>(primes.size()));
+        for (int i = 0; i < show_count; ++i) {
+            std::cout << primes[i];
+            if (i < show_count - 1) std::cout << ", ";
+        }
+        if (primes.size() > 5) {
+            std::cout << ", ... and " << (primes.size() - 5) << " more";
+        }
+        std::cout << std::endl;
     }
 
     auto program_end = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(program_end - program_start);
 
-    std::cout << "\nExecution completed at: " << get_timestamp(program_end) << std::endl;
-    std::cout << "Total runtime: " << elapsed.count() << " ms" << std::endl;
+    std::cout << "\n=============================================================" << std::endl;
+    std::cout << "End: " << get_timestamp(program_end) << std::endl;
+    std::cout << "Runtime: " << elapsed.count() << " ms" << std::endl;
 }
 
 int main() {

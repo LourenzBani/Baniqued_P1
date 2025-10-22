@@ -67,42 +67,41 @@ inline bool check_primality(uint64_t num) {
 
 std::string get_timestamp(const std::chrono::system_clock::time_point& point) {
     auto tt = std::chrono::system_clock::to_time_t(point);
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(point.time_since_epoch()) % 1000;
     std::stringstream stream;
-    stream << std::put_time(std::localtime(&tt), "%Y-%m-%d %H:%M:%S");
-    stream << "." << std::setfill('0') << std::setw(3) << millis.count();
+    stream << std::put_time(std::localtime(&tt), "%H:%M:%S");
     return stream.str();
 }
 
-void find_primes_in_segment(uint64_t lower, uint64_t upper, int worker_id) {
+void find_primes_in_segment(uint64_t lower, uint64_t upper, int thread_id) {
     auto begin_time = std::chrono::system_clock::now();
     
     {
         std::lock_guard<std::mutex> guard(output_lock);
-        std::cout << "Worker " << worker_id << " started [" << lower << " to " << upper 
-                  << "] at " << get_timestamp(begin_time) << std::endl;
+        std::cout << "[Thread " << thread_id << "] Starting range " << lower << "-" << upper 
+                  << " at " << get_timestamp(begin_time) << std::endl;
     }
 
     for (uint64_t candidate = lower; candidate <= upper; ++candidate) {
         if (check_primality(candidate)) {
             auto now = std::chrono::system_clock::now();
             std::lock_guard<std::mutex> guard(output_lock);
-            std::cout << "Worker " << worker_id << " found prime: " << candidate 
-                      << " at " << get_timestamp(now) << std::endl;
+            std::cout << "[Thread " << thread_id << "] Found prime: " << candidate 
+                      << " (Time: " << get_timestamp(now) << ")" << std::endl;
         }
     }
 
     auto end_time = std::chrono::system_clock::now();
     std::lock_guard<std::mutex> guard(output_lock);
-    std::cout << "Worker " << worker_id << " completed at " << get_timestamp(end_time) << std::endl;
+    std::cout << "[Thread " << thread_id << "] Completed at " << get_timestamp(end_time) << std::endl;
 }
 
 void execute_prime_search(const Settings& cfg) {
-    std::cout << "\n=== Prime Search: Immediate Print + Range Division ===" << std::endl;
-    std::cout << "Threads: " << cfg.thread_count << " | Search Limit: " << cfg.upper_limit << std::endl;
+    std::cout << "\n========== VARIANT A1-B1 ==========" << std::endl;
+    std::cout << "A1: Print Immediately | B1: Straight Division of Search Range" << std::endl;
+    std::cout << "Configuration: " << cfg.thread_count << " threads, searching up to " << cfg.upper_limit << std::endl;
 
     auto program_start = std::chrono::system_clock::now();
-    std::cout << "Starting execution at: " << get_timestamp(program_start) << "\n" << std::endl;
+    std::cout << "Start Time: " << get_timestamp(program_start) << "\n" << std::endl;
 
     std::vector<std::thread> workers;
     uint64_t segment_size = cfg.upper_limit / cfg.thread_count;
@@ -118,8 +117,9 @@ void execute_prime_search(const Settings& cfg) {
     auto program_end = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(program_end - program_start);
 
-    std::cout << "\nExecution completed at: " << get_timestamp(program_end) << std::endl;
-    std::cout << "Total runtime: " << elapsed.count() << " ms" << std::endl;
+    std::cout << "\n=================================================================" << std::endl;
+    std::cout << "End Time: " << get_timestamp(program_end) << std::endl;
+    std::cout << "Execution Time: " << elapsed.count() << " ms" << std::endl;
 }
 
 int main() {
