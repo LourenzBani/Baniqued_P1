@@ -13,27 +13,23 @@ Max Value = 1000
 Navigate to each variant directory and compile:
 
 ```bash
-cd variant1
 g++ -std=c++20 -O3 -pthread prime_search.cpp -o prime_search.exe
-./prime_search.exe
+prime_search.exe
 ```
 
 ```bash
-cd variant2
 g++ -std=c++20 -O3 -pthread prime_search.cpp -o prime_search.exe
-./prime_search.exe
+prime_search.exe
 ```
 
 ```bash
-cd variant3
 g++ -std=c++20 -O3 -pthread prime_search.cpp -o prime_search.exe
-./prime_search.exe
+prime_search.exe
 ```
 
 ```bash
-cd variant4
 g++ -std=c++20 -O3 -pthread prime_search.cpp -o prime_search.exe
-./prime_search.exe
+prime_search.exe
 ```
 
 ## How to Build and Run
